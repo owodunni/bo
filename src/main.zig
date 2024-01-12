@@ -1,6 +1,9 @@
 const std = @import("std");
 
+const getTestDb = @import("test.zig").getTestDb;
+
 pub fn main() !void {
+
     // Prints to stderr (it's a shortcut based on `std.io.getStdErr()`)
     std.debug.print("All your {s} are belong to us.\n", .{"codebase"});
 
@@ -14,6 +17,9 @@ pub fn main() !void {
     try stdout.print("Run `zig build test` to run the tests.\n", .{});
 
     try bw.flush(); // don't forget to flush!
+
+    var db = try getTestDb();
+    defer db.deinit();
 }
 
 test "simple test" {
