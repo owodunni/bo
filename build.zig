@@ -8,19 +8,30 @@ pub fn build(b: *std.Build) void {
 
     const optimize = b.standardOptimizeOption(.{});
 
+    const sqlite_lib = b.addStaticLibrary(.{
+        .name = "sqlite",
+        .target = target,
+        .optimize = optimize,
+    });
+
+    sqlite_lib.addIncludePath(.{ .path = "c/" });
+    sqlite_lib.addCSourceFile(.{
+        .file = .{ .path = "c/sqlite3.c" },
+        .flags = &[_][]const u8{"-std=c99"},
+    });
+    sqlite_lib.linkLibC();
+    sqlite_lib.installHeader("c/sqlite3.h", "sqlite3.h");
+
+    b.installArtifact(sqlite_lib);
+
     const exe = b.addExecutable(.{
         .name = "bo",
         .root_source_file = .{ .path = "src/main.zig" },
         .target = target,
         .optimize = optimize,
     });
-    exe.addIncludePath(.{ .path = "c" });
-    exe.addCSourceFile(.{
-        .file = .{ .path = "c/sqlite3.c" },
-        .flags = &[_][]const u8{"-std=c99"},
-    });
-    exe.linkLibC();
-    exe.installHeader("c/sqlite3.h", "sqlite3.h");
+
+    exe.linkLibrary(sqlite_lib);
 
     b.installArtifact(exe);
 
@@ -50,13 +61,7 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    lib_unit_tests.addIncludePath(.{ .path = "c" });
-    lib_unit_tests.addCSourceFile(.{
-        .file = .{ .path = "c/sqlite3.c" },
-        .flags = &[_][]const u8{"-std=c99"},
-    });
-    lib_unit_tests.linkLibC();
-    lib_unit_tests.installHeader("c/sqlite3.h", "sqlite3.h");
+    lib_unit_tests.linkLibrary(sqlite_lib);
 
     const run_lib_unit_tests = b.addRunArtifact(lib_unit_tests);
 
